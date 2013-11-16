@@ -104,7 +104,7 @@ public class JsonInfo {
 	 * @return A String array of the result, line-by-line
 	 * @throws IOException when it cannot get a result.
 	 */
-	String[] request(String req) throws IOException {
+	String[] request(String req) throws IOException, UnknownHostException {
 		Socket sock = null;
 		BufferedReader in = null;
 		PrintWriter out = null;
@@ -116,11 +116,11 @@ public class JsonInfo {
 			out = new PrintWriter(sock.getOutputStream(), true);
 		} catch (UnknownHostException e) {
 			System.err.println("Unknown host: " + host);
-			return new String[0];
+			throw e;
 		} catch (IOException e) {
 			System.err.println("Couldn't get I/O for socket to " + host + ":"
 					+ Integer.toString(port));
-			return new String[0];
+			throw e;
 		}
 		out.println(req);
 		String line;
@@ -142,7 +142,7 @@ public class JsonInfo {
 	 * @param The command to query jsoninfo with
 	 * @return The complete JSON from jsoninfo as single String
 	 */
-	public String command(String cmdString) {
+	public String command(String cmdString) throws IOException {
 		String[] data = new String[0];
 		String ret = "";
 
@@ -152,6 +152,7 @@ public class JsonInfo {
 		} catch (IOException e) {
 			System.err.println("Failed to read data from " + host + ":"
 					+ Integer.toString(port));
+			throw e;
 		}
 		for (String s : data) {
 			ret += s + "\n";
@@ -166,7 +167,7 @@ public class JsonInfo {
 	 * @param The command to query jsoninfo with
 	 * @return The complete JSON reply parsed into Java objects.
 	 */
-	public OlsrDataDump parseCommand(String cmd) {
+	public OlsrDataDump parseCommand(String cmd) throws IOException {
 		if (mapper == null)
 			mapper = new ObjectMapper();
 		OlsrDataDump ret = new OlsrDataDump();
@@ -188,8 +189,7 @@ public class JsonInfo {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw e;
 		}
 
 		// change nulls to blank objects so you can use this result in a for()
@@ -222,7 +222,7 @@ public class JsonInfo {
 	 * @return array of per-IP arrays of IP address, SYM, MPR, MPRS,
 	 *         Willingness, and 2 Hop Neighbors
 	 */
-	public OlsrDataDump all() {
+	public OlsrDataDump all() throws IOException {
 		return parseCommand("/all");
 	}
 
@@ -232,7 +232,7 @@ public class JsonInfo {
 	 * @return array of per-IP arrays of IP address, SYM, MPR, MPRS,
 	 *         Willingness, and 2 Hop Neighbors
 	 */
-	public OlsrDataDump runtime() {
+	public OlsrDataDump runtime() throws IOException {
 		return parseCommand("/interfaces");
 	}
 
@@ -242,7 +242,7 @@ public class JsonInfo {
 	 * @return array of per-IP arrays of IP address, SYM, MPR, MPRS,
 	 *         Willingness, and 2 Hop Neighbors
 	 */
-	public OlsrDataDump startup() {
+	public OlsrDataDump startup() throws IOException {
 		return parseCommand("/interfaces");
 	}
 
@@ -252,7 +252,7 @@ public class JsonInfo {
 	 * @return array of per-IP arrays of IP address, SYM, MPR, MPRS,
 	 *         Willingness, and 2 Hop Neighbors
 	 */
-	public Collection<Neighbor> neighbors() {
+	public Collection<Neighbor> neighbors() throws IOException {
 		return parseCommand("/neighbors").neighbors;
 	}
 
@@ -263,7 +263,7 @@ public class JsonInfo {
 	 * @return array of per-IP arrays of Local IP, Remote IP, Hysteresis, LQ,
 	 *         NLQ, and Cost
 	 */
-	public Collection<Link> links() {
+	public Collection<Link> links() throws IOException {
 		return parseCommand("/links").links;
 	}
 
@@ -273,7 +273,7 @@ public class JsonInfo {
 	 * @return array of per-IP arrays of Destination, Gateway IP, Metric, ETX,
 	 *         and Interface
 	 */
-	public Collection<Route> routes() {
+	public Collection<Route> routes() throws IOException{
 		return parseCommand("/routes").routes;
 	}
 
@@ -282,7 +282,7 @@ public class JsonInfo {
 	 * 
 	 * @return array of per-IP arrays of Destination and Gateway
 	 */
-	public Collection<HNA> hna() {
+	public Collection<HNA> hna() throws IOException {
 		return parseCommand("/hna").hna;
 	}
 
@@ -291,7 +291,7 @@ public class JsonInfo {
 	 * 
 	 * @return array of per-IP arrays of IP address and Aliases
 	 */
-	public Collection<MID> mid() {
+	public Collection<MID> mid() throws IOException {
 		return parseCommand("/mid").mid;
 	}
 
@@ -301,7 +301,7 @@ public class JsonInfo {
 	 * @return array of per-IP arrays of Destination IP, Last hop IP, LQ, NLQ,
 	 *         and Cost
 	 */
-	public Collection<Node> topology() {
+	public Collection<Node> topology() throws IOException {
 		return parseCommand("/topology").topology;
 	}
 
@@ -311,7 +311,7 @@ public class JsonInfo {
 	 * @return array of per-IP arrays of Destination IP, Last hop IP, LQ, NLQ,
 	 *         and Cost
 	 */
-	public Collection<Interface> interfaces() {
+	public Collection<Interface> interfaces() throws IOException {
 		return parseCommand("/interfaces").interfaces;
 	}
 
@@ -321,34 +321,35 @@ public class JsonInfo {
 	 * @return array of per-IP arrays of Status, Gateway IP, ETX, Hopcount,
 	 *         Uplink, Downlink, IPv4, IPv6, Prefix
 	 */
-	public Collection<Gateway> gateways() {
+	public Collection<Gateway> gateways() throws IOException {
 		return parseCommand("/gateways").gateways;
 	}
 
 	/**
 	 * The parsed configuration of olsrd in its current state
 	 */
-	public Config config() {
+	public Config config() throws IOException {
 		return parseCommand("/config").config;
 	}
 
 	/**
 	 * The parsed configuration of plugins in their current state
 	 */
-	public Collection<Plugin> plugins() {
+	public Collection<Plugin> plugins() throws IOException {
 		return parseCommand("/plugins").plugins;
 	}
 
 	/**
 	 * The current olsrd configuration in the olsrd.conf format, NOT json
 	 */
-	public String olsrdconf() {
+	public String olsrdconf() throws IOException {
 		return command("/olsrd.conf");
 	}
 
 	/**
 	 * for testing from the command line
 	 */
+	/*
 	public static void main(String[] args) throws IOException {
 		JsonInfo jsoninfo = new JsonInfo();
 		OlsrDataDump dump = jsoninfo.all();
@@ -380,4 +381,5 @@ public class JsonInfo {
 		for (Node node : dump.topology)
 			System.out.println("\t" + node.destinationIP);
 	}
+	*/
 }
